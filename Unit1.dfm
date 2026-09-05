@@ -14,6 +14,7 @@ object Main: TMain
   Font.Style = []
   OldCreateOrder = False
   OnClose = FormClose
+  OnDestroy = FormDestroy
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13

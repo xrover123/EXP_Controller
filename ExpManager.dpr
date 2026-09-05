@@ -8,6 +8,8 @@ uses
 {$R *.res}
 
 begin
+  hMutexProg := 0;
+  if not IsSingleInstance('') then Halt(1);
   Application.Initialize;
   Application.CreateForm(TMain, Main);
   Application.Run;

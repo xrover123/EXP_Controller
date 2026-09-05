@@ -20,6 +20,7 @@ type
     procedure Timer1Timer(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure SaveLogFile(S: String);
+    procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
     Regime: byte;
@@ -39,6 +40,9 @@ type
 
 var
   Main: TMain;
+  hMutexProg: THandle;
+
+function IsSingleInstance(const AddMutex: String): Boolean;//Проверка единичного запуска
 
 implementation
 
@@ -51,6 +55,38 @@ const LR:char=chr(10);
 function GetPC: word; stdcall;
   external 'NetParam.dll' name 'GetPCCode';
 }
+
+function IsSingleInstance(const AddMutex: String): Boolean;//Проверка единичного запуска
+const
+  MutexPref = 'Global\Apsida-EXP_Controller';
+var
+  MutexName: String; // уникальное имя мьютекса
+
+begin
+  if AddMutex='' then
+    MutexName := MutexPref
+    else
+    MutexName:=MutexPref+'('+AddMutex+')';
+  // Пытаемся создать мьютекс. Если он уже есть — GetLastError вернёт ERROR_ALREADY_EXISTS
+  hMutexProg := CreateMutex(nil, False, PChar(MutexName));
+
+  if hMutexProg = 0 then
+    raise Exception.Create('Не удалось создать мьютекс');
+
+  if GetLastError = ERROR_ALREADY_EXISTS then
+  begin
+    // Мьютекс уже существует — значит, другой экземпляр запущен
+    CloseHandle(hMutexProg);
+    Result := False;
+  end
+  else
+  begin
+    // Мьютекса не было — мы его создали, значит, других экземпляров нет
+    Result := True;
+    // Не закрываем hMutex: пока процесс жив, мьютекс будет держать блокировку.
+    // При завершении программы ОС сама его освободит.
+  end;
+end;
 
 procedure TMain.FormShow(Sender: TObject);
 var INI: TINIFile;
@@ -66,7 +102,11 @@ var INI: TINIFile;
     sERR: String;
     sSQL: String;
     SS: TStringList;
+    HH: integer;
+    MM: integer;
     //SP: TSQLStoredProc;
+const ord_0 = ord('0');
+const ord_9 = ord('9');
 procedure StopFileCrt;
   var F: File;
   begin
@@ -215,6 +255,20 @@ if length(FN)=0 then
     end;
   SS.Destroy;
   end;
+FN:=trim(INI.ReadString('SHEDULER','EXP_END',''));
+if length(FN)=0 then
+  bCloseTime:=False
+  else
+  begin
+  bCloseTime:=True;
+  i := pos(':', FN);
+  if (i > 0) and
+     TryStrToInt(copy(FN, 1, i-1), HH) and
+     TryStrToInt(copy(FN, i+1, length(FN) - i), MM) then
+    dCloseTime := date + EncodeTime(HH, MM, 0, 0)
+    else
+    dCloseTime:=date+EncodeTime(23, 0, 0, 0);
+  end;
 
 {
 try
@@ -357,6 +411,7 @@ var P, S, ERR: String;
     bERR: boolean;
     SS: TStringList;
     sRN: String;
+    i: integer;
 procedure run(const sFileName: String; var sERR: String);
   var
   g:TStartupInfo;
@@ -379,12 +434,35 @@ procedure run(const sFileName: String; var sERR: String);
     end;
   end;
 begin
-try
-if V.Active then
-  V.Refresh
-  else
-  V.Active:=True;
 
+i:=0;
+bERR:=True;
+while i<MaxErrorCount do
+  try
+    if V.Active then
+      V.Refresh
+      else
+      V.Active:=True;
+    bERR:=False;
+    break;
+    except
+    try
+      inc(i);
+      ORAConnection.Connected := False;
+      V.Active:=False;
+      ORAConnection.Connected := True;
+      except
+      continue;
+      end;
+    end;
+if bERR then
+  begin
+  SaveLogFile('end EXCHANGE('+DateTimeToStr(now)+') Сервис необходимо перезапустить.');
+  Close;
+  exit;
+  end;
+
+try
 while not V.Eof do
   begin
   bERR:=False;
@@ -487,6 +565,15 @@ if PB.Visible then
     begin
     SaveLogFile('end EXCHANGE('+DateTimeToStr(now)+')');
     end;
+end;
+
+procedure TMain.FormDestroy(Sender: TObject);
+begin
+if hMutexProg <> 0 then
+  begin
+    CloseHandle(hMutexProg);
+    hMutexProg := 0;
+  end;
 end;
 
 end.
