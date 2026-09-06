@@ -13,6 +13,7 @@ object Main: TMain
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  Position = poDesktopCenter
   OnClose = FormClose
   OnDestroy = FormDestroy
   OnShow = FormShow
