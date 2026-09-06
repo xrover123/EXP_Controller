@@ -202,7 +202,7 @@ bERR:=False;
 MaxErrorCount:=10;
 ErrorCount:=0;
 if ParamCount=1 then
-  if (ParamStr(1)='-V') or (ParamStr(1)='-v') then
+  if (ParamStr(1)='-V') or (UpperCase(ParamStr(1))='-v') then
     begin
     Label1.Caption:='Version '+VERSION;
     PB.Visible:=False;

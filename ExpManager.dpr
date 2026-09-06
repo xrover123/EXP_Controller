@@ -1,7 +1,7 @@
 program ExpManager;
 
 uses
-  Forms,
+  Forms, SysUtils,
   Unit1 in 'Unit1.pas' {Main},
   RunProgram in 'RunProgram.pas';
 
@@ -9,7 +9,7 @@ uses
 
 begin
   hMutexProg := 0;
-  if (ParamCount<>1) or (ParamStr(1)<>'-V') then
+  if (ParamCount<>1) or (UpperCase(ParamStr(1))<>'-V') then
     if not IsSingleInstance('') then Halt(1);
   Application.Initialize;
   Application.CreateForm(TMain, Main);
