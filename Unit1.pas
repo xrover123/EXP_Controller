@@ -201,7 +201,7 @@ ErrorCount:=0;
 if ParamCount=1 then
   if (ParamStr(1)='-V') or (ParamStr(1)='-v') then
     begin
-    Label1.Caption:='Version 2.2';
+    Label1.Caption:='Version 3.0';
     PB.Visible:=False;
     exit
     end;

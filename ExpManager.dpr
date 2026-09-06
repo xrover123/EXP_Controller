@@ -9,7 +9,8 @@ uses
 
 begin
   hMutexProg := 0;
-  if not IsSingleInstance('') then Halt(1);
+  if (ParamCount<>1) or (ParamStr(1)<>'-V') then
+    if not IsSingleInstance('') then Halt(1);
   Application.Initialize;
   Application.CreateForm(TMain, Main);
   Application.Run;
