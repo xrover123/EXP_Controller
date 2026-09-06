@@ -7,6 +7,8 @@ uses
   Dialogs, StdCtrls, DB, ADODB, DBXpress, FMTBcd, SqlExpr, ExtCtrls,
   ComCtrls;
 
+const VERSION = '3.0';
+
 const IniFileName = 'exchange.ini';
 
 type
@@ -195,13 +197,14 @@ procedure PrintIniExample;
     end;
   end;
 begin
+Caption:='File exchange manager '+VERSION;
 bERR:=False;
 MaxErrorCount:=10;
 ErrorCount:=0;
 if ParamCount=1 then
   if (ParamStr(1)='-V') or (ParamStr(1)='-v') then
     begin
-    Label1.Caption:='Version 3.0';
+    Label1.Caption:='Version '+VERSION;
     PB.Visible:=False;
     exit
     end;
